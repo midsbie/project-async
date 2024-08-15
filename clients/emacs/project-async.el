@@ -101,7 +101,10 @@ process.")
 (defun project-async--complete-file (input)
   "Generate completion candidates for INPUT using the Project Async server."
   (when-let ((dir (project-root (project-current))))
-    (project-async--send-request (string-join (list "ls-files" dir input) " "))))
+    (project-async--send-request (string-join
+                                  (list "ls-files"
+                                        (expand-file-name dir)
+                                        input) " "))))
 
 (defun project-async--override-project-find-file-in (suggested-filename dirs project &optional include-all)
   "Custom implementation replacing `project-find-file-in`."
