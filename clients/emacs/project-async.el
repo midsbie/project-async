@@ -60,14 +60,10 @@ process.")
   (unless (and project-async-process (process-live-p project-async-process))
     (let ((buffer (get-buffer-create "*project-async-server*")))
       (with-current-buffer buffer
-        ;; Disable undo to save memory
-        (setq buffer-undo-list t)
-        ;; Make the buffer read-only
-        (setq buffer-read-only t)
-        ;; Set local variables to reduce resource usage
+        (setq buffer-undo-list t
+              buffer-read-only t)
         (setq-local auto-save-default nil)
         (setq-local truncate-lines t)
-        ;; (setq-local mode-line-format nil)
         )
       (setq project-async-process-buffer buffer
             project-async-process (apply #'start-process
