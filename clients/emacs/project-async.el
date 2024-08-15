@@ -96,7 +96,6 @@ and subsequent elements are command-line arguments.")
       (project-async--send-request (string-join (list "ls-files" dir input) " "))
       (accept-process-output project-async-process 1) ;; Wait for the process to respond
       (let ((candidates (project-async--read-response)))
-        ;; (debug-message "%s: got %d candidates" input (length candidates))
         candidates))))
 
 (defun project-async--override-project-find-file-in (suggested-filename dirs project &optional include-all)
