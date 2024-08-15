@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "main": "src/index.ts",
   "type": "module",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "author": "Miguel Guedes <miguel@softgeist.com>",
+  "license": "MIT",
+  "bin": {
+    "project-async-server": "./dist/index.esm.js"
   },
-  "author": "",
-  "license": "ISC",
   "description": "",
   "devDependencies": {
     "@types/node": "^22.3.0",
