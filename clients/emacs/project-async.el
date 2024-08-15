@@ -48,6 +48,13 @@ and subsequent elements are command-line arguments.")
 (defvar project-async--last-completion-table nil
   "The list of last completion results.")
 
+(defvar project-async--in-progress nil
+  "Flag to indicate if a request is in progress.")
+
+(defconst project-async--process-output-timeout 2.5
+  "Timeout in seconds to wait for a response from the Project Async server
+process.")
+
 (defun project-async--start-server ()
   "Start the Project Async server as a subprocess."
   (unless (and project-async-process (process-live-p project-async-process))
@@ -70,33 +77,35 @@ and subsequent elements are command-line arguments.")
     (set-process-query-on-exit-flag project-async-process nil)))
 
 (defun project-async--stop-server ()
-  "Stop the Node.js file server process if it is running."
+  "Stop the Project Async server process if it is running."
   (when (and project-async-process (process-live-p project-async-process))
     (kill-process project-async-process)
     (setq project-async-process nil)))
 
 (defun project-async--send-request (input)
-  "Send INPUT to the Node.js file server process."
+  "Send INPUT to the Project Async server process."
   (when (process-live-p project-async-process)
+    (when project-async--in-progress
+      (accept-process-output project-async-process))
+    (setq project-async--in-progress t)
     (with-current-buffer project-async-process-buffer
       (let ((inhibit-read-only t))
         (erase-buffer)))
-    (process-send-string project-async-process (concat input "\n"))))
+    (process-send-string project-async-process (concat input "\n"))
+    (accept-process-output project-async-process project-async--process-output-timeout)
+    (setq project-async--in-progress nil)
+    (project-async--read-response)))
 
 (defun project-async--read-response ()
-  "Read and parse the JSON output from the Node.js process buffer."
+  "Read and parse the JSON output from the Project Async server process buffer."
   (with-current-buffer project-async-process-buffer
     (let ((json-array-type 'list))
       (json-read-from-string (buffer-string)))))
 
 (defun project-async--complete-file (input)
-  "Generate completion candidates for INPUT using the Node.js file server."
-  (let ((dir (project-root (project-current))))
-    (when dir
-      (project-async--send-request (string-join (list "ls-files" dir input) " "))
-      (accept-process-output project-async-process 1) ;; Wait for the process to respond
-      (let ((candidates (project-async--read-response)))
-        candidates))))
+  "Generate completion candidates for INPUT using the Project Async server."
+  (when-let ((dir (project-root (project-current))))
+    (project-async--send-request (string-join (list "ls-files" dir input) " "))))
 
 (defun project-async--override-project-find-file-in (suggested-filename dirs project &optional include-all)
   "Custom implementation replacing `project-find-file-in`."
