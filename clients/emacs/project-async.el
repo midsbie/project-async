@@ -25,9 +25,7 @@
 ;; (defun complete-file-name ()
 ;;   (interactive)
 ;;   (completing-read "Enter file: "
-;;                                 #'project-async--completion-function))
-
-
+;;                    #'project-async--completion-function))
 
 ;;; Code:
 
@@ -44,13 +42,14 @@ and subsequent elements are command-line arguments.")
 (defvar project-async-process nil
   "Process handle for the Project Async server.")
 
+(defvar project-async--last-completion-time 0
+  "The last completion time, as returned by `float-time'.")
 
-(defvar project-async--last-completion-time 0)
-(defvar project-async--last-completion-table nil)
+(defvar project-async--last-completion-table nil
+  "The list of last completion results.")
 
-(defun project-async-start-server ()
+(defun project-async--start-server ()
   "Start the Project Async server as a subprocess."
-  (interactive)
   (unless (and project-async-process (process-live-p project-async-process))
     (let ((buffer (get-buffer-create "*project-async-server*")))
       (with-current-buffer buffer
@@ -70,13 +69,11 @@ and subsequent elements are command-line arguments.")
                                          project-async-server-command)))
     (set-process-query-on-exit-flag project-async-process nil)))
 
-(defun project-async-stop-server ()
+(defun project-async--stop-server ()
   "Stop the Node.js file server process if it is running."
-  (interactive)
   (when (and project-async-process (process-live-p project-async-process))
     (kill-process project-async-process)
-    (setq project-async-process nil)
-    (debug-message "Node.js file server process terminated.")))
+    (setq project-async-process nil)))
 
 (defun project-async--send-request (input)
   "Send INPUT to the Node.js file server process."
@@ -102,15 +99,8 @@ and subsequent elements are command-line arguments.")
         ;; (debug-message "%s: got %d candidates" input (length candidates))
         candidates))))
 
-(defun project-find-file-in (suggested-filename dirs project &optional include-all)
-  "Complete a file name in DIRS in PROJECT and visit the result.
-
-SUGGESTED-FILENAME is a file name, or part of it, which
-is used as part of \"future history\".
-
-If INCLUDE-ALL is non-nil, or with prefix argument when called
-interactively, include all files from DIRS, except for VCS
-directories listed in `vc-directory-exclusion-list'."
+(defun project-async--override-project-find-file-in (suggested-filename dirs project &optional include-all)
+  "Custom implementation replacing `project-find-file-in`."
   (let* ((project-read-file-name-function #'project-async--read-file)
          (completion-ignore-case read-file-name-completion-ignore-case)
          (default-directory (project-root project))
@@ -149,6 +139,24 @@ directories listed in `vc-directory-exclusion-list'."
                                    get-collection
                                    predicate
                                    hist mb-default))
+
+(define-minor-mode project-async-mode
+  "Global minor mode for Project Async."
+  :global t
+  :lighter " Pasyn"
+  :init-value nil
+  :group 'project-async
+
+  (if project-async-mode
+      (progn
+        (setq project-async--last-completion-time 0
+              project-async--last-completion-table nil)
+        (project-async--start-server)
+        (advice-add 'project-find-file-in :override #'project-async--override-project-find-file-in))
+    (project-async--stop-server)
+    (when (buffer-live-p project-async-process-buffer)
+      (kill-buffer project-async-process-buffer))
+    (advice-remove 'project-find-file-in #'project-async--override-project-find-file-in)))
 
 (provide 'project-async)
 ;;; project-async.el ends here
