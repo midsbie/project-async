@@ -48,7 +48,6 @@ export class GitBackend implements VcBackend {
 
         const result = Buffer.concat(output).toString("utf8").split("\0");
         if (result[result.length - 1] === "") result.pop();
-
         resolve(result);
       });
     });

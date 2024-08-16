@@ -1,3 +1,4 @@
 import "./GitBackend";
 
-export * from "./VcBackendCtl";
+export * from "./VcRepositoryCtl";
+export * from "./VcRepository";

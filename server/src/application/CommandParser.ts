@@ -1,11 +1,11 @@
-import { VcBackendCtl } from "../backends";
+import { VcRepositoryCtl } from "../backends";
 import { CompleteFileCommand, ServerCommand } from "../server";
 
 export class CommandParser {
-  backendCtl: VcBackendCtl;
+  repoCtl: VcRepositoryCtl;
 
-  constructor(backendCtl: VcBackendCtl) {
-    this.backendCtl = backendCtl;
+  constructor(repoCtl: VcRepositoryCtl) {
+    this.repoCtl = repoCtl;
   }
 
   async parse(input: string): Promise<ServerCommand<unknown> | null> {
@@ -18,7 +18,7 @@ export class CommandParser {
     switch (parts[0]) {
       case "complete-file":
         if (parts.length < 2) return null;
-        return new CompleteFileCommand(await this.backendCtl.getBackend(parts[1]), parts.slice(2));
+        return new CompleteFileCommand(await this.repoCtl.get(parts[1]), parts.slice(2));
     }
 
     return null;
