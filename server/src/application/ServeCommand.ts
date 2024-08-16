@@ -1,6 +1,7 @@
 import { Command } from "commander";
 
 import { ResponseFormatter, ResponseFormatterFactory } from "../ResponseFormatter";
+import { VcBackendCtl } from "../backends";
 import { StdioServer } from "../server";
 import { CommandParser } from "./CommandParser";
 
@@ -19,7 +20,7 @@ export class ServeCommand extends Command {
         }
 
         return new ServeCommand().run(
-          new CommandParser(),
+          new CommandParser(new VcBackendCtl()),
           ResponseFormatterFactory.fromName(format),
         );
       });

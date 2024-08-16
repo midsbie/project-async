@@ -4,7 +4,7 @@ import { ResponseFormatter } from "../ResponseFormatter";
 import { ServerCommand } from "./command";
 
 interface CommandParser {
-  parse(input: string): ServerCommand<unknown> | null;
+  parse(input: string): Promise<ServerCommand<unknown> | null>;
 }
 
 export class StdioServer {
@@ -42,7 +42,7 @@ export class StdioServer {
   private async process(input: string) {
     if (this.job) await this.job;
 
-    const command = this.commandParser.parse(input);
+    const command = await this.commandParser.parse(input);
     if (!command) return [];
 
     try {
