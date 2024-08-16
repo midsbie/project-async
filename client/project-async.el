@@ -1,4 +1,4 @@
-;;; project-async.el --- Project Async               -*- lexical-binding: t; -*-
+;;; project-async.el --- Asynchronous file completion for projects  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2024  Miguel Guedes
 
