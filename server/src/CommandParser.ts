@@ -1,5 +1,5 @@
 import { Command } from "./Command";
-import { LsFilesCommand } from "./commands/ls-files";
+import { CompleteCommand } from "./commands/CompleteCommand";
 
 export class CommandParser {
   parse(input: string): Command<unknown> | null {
@@ -10,9 +10,9 @@ export class CommandParser {
     if (parts.length < 1) return null;
 
     switch (parts[0]) {
-      case "ls-files":
+      case "complete":
         if (parts.length < 2) return null;
-        return new LsFilesCommand(parts[1], parts.slice(2));
+        return new CompleteCommand(parts[1], parts.slice(2));
     }
 
     return null;

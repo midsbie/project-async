@@ -2,7 +2,7 @@ import { Command } from "../Command";
 import { GitLsFiles } from "../GitLsFiles";
 import { MAX_CANDIDATES } from "../consts";
 
-export class LsFilesCommand extends Command<string[]> {
+export class CompleteCommand extends Command<string[]> {
   directory: string;
   terms: string[];
 

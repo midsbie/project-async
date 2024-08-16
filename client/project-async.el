@@ -134,7 +134,7 @@ process.")
   "Generate completion candidates for INPUT using the Project Async server."
   (when-let ((dir (project-root (project-current))))
     (project-async--send-request (string-join
-                                  (list "ls-files"
+                                  (list "complete"
                                         (expand-file-name dir)
                                         input) " "))))
 
