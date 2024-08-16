@@ -87,10 +87,12 @@ process.")
     (with-current-buffer project-async-process-buffer
       (let ((inhibit-read-only t))
         (erase-buffer)))
-    (process-send-string project-async-process (concat input "\n"))
-    (accept-process-output project-async-process project-async--process-output-timeout)
-    (setq project-async--in-progress nil)
-    (project-async--read-response)))
+    (unwind-protect
+        (progn
+          (process-send-string project-async-process (concat input "\n"))
+          (accept-process-output project-async-process project-async--process-output-timeout)
+          (project-async--read-response))
+      (setq project-async--in-progress nil))))
 
 (defun project-async--read-response ()
   "Read and parse the JSON output from the Project Async server process buffer."
