@@ -1,8 +1,8 @@
-import { Command } from "../Command";
 import { GitLsFiles } from "../GitLsFiles";
 import { MAX_CANDIDATES } from "../consts";
+import { ServerCommand } from "./command";
 
-export class CompleteCommand extends Command<string[]> {
+export class CompleteFileCommand extends ServerCommand<string[]> {
   directory: string;
   terms: string[];
 

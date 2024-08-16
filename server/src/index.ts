@@ -1,4 +1,3 @@
-import { CommandParser } from "./CommandParser";
-import { StdioCommandInterface } from "./StdioInterface";
+import { main } from "./main";
 
-new StdioCommandInterface(new CommandParser()).run();
+main();

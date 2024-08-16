@@ -60,7 +60,7 @@
 
 (require 'json)
 
-(defvar project-async-server-command '("project-async-server")
+(defvar project-async-server-command '("project-async-server" "serve" "--stdio")
   "The command to run the Project Async server.
 This is a list where the first element is the path to the executable,
 and subsequent elements are command-line arguments.")
@@ -134,7 +134,7 @@ process.")
   "Generate completion candidates for INPUT using the Project Async server."
   (when-let ((dir (project-root (project-current))))
     (project-async--send-request (string-join
-                                  (list "complete"
+                                  (list "complete-file"
                                         (expand-file-name dir)
                                         input) " "))))
 
