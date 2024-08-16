@@ -98,8 +98,8 @@ process.")
             project-async-process (apply #'start-process
                                          "project-async-server"
                                          buffer
-                                         project-async-server-command)))
-    (set-process-query-on-exit-flag project-async-process nil)))
+                                         project-async-server-command))
+      (set-process-query-on-exit-flag project-async-process nil))))
 
 (defun project-async--stop-server ()
   "Stop the Project Async server process if it is running."
