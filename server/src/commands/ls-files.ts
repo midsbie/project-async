@@ -1,6 +1,6 @@
 import { Command } from "../Command";
 import { MAX_CANDIDATES } from '../consts';
-import { GitLsFiles } from "../Files";
+import { GitLsFiles } from "../GitLsFiles";
 
 export class LsFilesCommand extends Command<string[]> {
   directory: string;
