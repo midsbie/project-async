@@ -9,6 +9,14 @@
     "project-async-server": "./dist/index.esm.js"
   },
   "description": "",
+  "scripts": {
+    "postinstall": "check-node-version --package && (test ! -L ../node_modules)",
+    "upgrade": "npx npm-check-updates -u",
+    "clean": "rm -rf dist node_modules",
+    "build": "devout build",
+    "lint": "tsc --noEmit && eslint . && prettier --check .",
+    "fmt": "prettier --write ."
+  },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "@types/node": "^22.3.0",
