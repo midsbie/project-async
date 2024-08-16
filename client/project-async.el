@@ -103,8 +103,12 @@ process.")
 
 (defun project-async--stop-server ()
   "Stop the Project Async server process if it is running."
-  (when (and project-async-process (process-live-p project-async-process))
-    (kill-process project-async-process)
+  (unwind-protect
+      (when (and project-async-process (process-live-p project-async-process))
+        (condition-case err
+            (kill-process project-async-process)
+          (error
+           (message "Failed to stop Project Async server: %s" err))))
     (setq project-async-process nil)))
 
 (defun project-async--send-request (input)
