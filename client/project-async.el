@@ -103,13 +103,10 @@ process.")
 
 (defun project-async--stop-server ()
   "Stop the Project Async server process if it is running."
-  (unwind-protect
-      (when (and project-async-process (process-live-p project-async-process))
-        (condition-case err
-            (kill-process project-async-process)
-          (error
-           (message "Failed to stop Project Async server: %s" err))))
-    (setq project-async-process nil)))
+  (when (and project-async-process (process-live-p project-async-process))
+    (with-demoted-errors "Failed to stop Project Async server: %S"
+      (kill-process project-async-process)))
+  (setq project-async-process nil))
 
 (defun project-async--send-request (input)
   "Send INPUT to the Project Async server process."
@@ -199,7 +196,7 @@ process.")
               (advice-add 'project-find-file-in :override #'project-async--override-project-find-file-in))
           (error
            (setq project-async-mode nil)
-           (user-error "Failed to start Project Async server: %s" err))))
+           (user-error "Failed to start Project Async server: %S" err))))
     (project-async--stop-server)
     (when (buffer-live-p project-async-process-buffer)
       (kill-buffer project-async-process-buffer))
