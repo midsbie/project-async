@@ -26,13 +26,14 @@ export class StdioServer {
         terminal: false,
       });
 
-      rl.on("line", async (input) => {
-        try {
-          const result = await this.process(input);
-          console.log(this.responseFormatter.format(result));
-        } catch (e) {
-          console.error(e);
-        }
+      rl.on("line", (input) => {
+        this.process(input)
+          .then((r) => {
+            console.log(this.responseFormatter.format(r));
+          })
+          .catch((e) => {
+            console.error(e);
+          });
       });
 
       rl.on("close", resolve);
@@ -40,7 +41,9 @@ export class StdioServer {
   }
 
   private async process(input: string) {
-    if (this.job) await this.job;
+    while (this.job) {
+      await this.job;
+    }
 
     const command = await this.commandParser.parse(input);
     if (!command) return [];

@@ -4,30 +4,38 @@ import { VcBackend } from "./VcBackend";
 import { VcBackendFactory } from "./VcBackendFactory";
 
 export class GitBackend implements VcBackend {
-  readonly repoPath: string;
+  readonly path: string;
 
-  static async create(repoPath: string): Promise<VcBackend> {
+  static async create(path: string): Promise<VcBackend> {
     const revParse = spawnSync("git", ["rev-parse", "--show-toplevel"], {
       encoding: "utf8",
-      cwd: repoPath,
+      cwd: path,
     });
 
     const stdout = revParse.stdout.trim();
     if (revParse.error || revParse.stderr.trim() || !stdout) {
-      throw new Error(`Git repository not found at: ${repoPath}`);
+      throw new Error(`Git repository not found at: ${path}`);
     }
 
     return new GitBackend(stdout);
   }
 
   private constructor(path: string) {
-    this.repoPath = path;
+    this.path = path;
+  }
+
+  listFast(): Promise<string[]> {
+    return this._list(["-z"]);
   }
 
   list(): Promise<string[]> {
+    return this._list(["-zco", "--exclude-standard"]);
+  }
+
+  private _list(args: string[]): Promise<string[]> {
     return new Promise((resolve) => {
-      const gitProcess = spawn("git", ["ls-files", "-zco", "--exclude-standard"], {
-        cwd: this.repoPath,
+      const gitProcess = spawn("git", ["ls-files", ...args], {
+        cwd: this.path,
       });
       const output: Uint8Array[] = [];
 

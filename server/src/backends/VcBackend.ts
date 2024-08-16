@@ -3,6 +3,7 @@ export interface VcBackendConstructor {
 }
 
 export interface VcBackend {
-  readonly repoPath: string;
+  readonly path: string;
+  listFast(): Promise<string[]>;
   list(): Promise<string[]>;
 }

@@ -8,13 +8,13 @@ export class VcRepositoryCtl {
     this.knownRepos = new VcKnownRepositories();
   }
 
-  async get(repoPath: string): Promise<VcRepository> {
-    let repo = this.knownRepos.get(repoPath);
+  async get(path: string): Promise<VcRepository> {
+    let repo = this.knownRepos.get(path);
     if (repo) return repo;
 
-    const backend = await VcBackendFactory.getBackend(repoPath);
+    const backend = await VcBackendFactory.getBackend(path);
     repo = new VcRepository(backend);
-    this.knownRepos.add(repoPath, repo);
+    this.knownRepos.add(path, repo);
     return repo;
   }
 }
@@ -26,16 +26,16 @@ class VcKnownRepositories {
     this.backends = new Map();
   }
 
-  add(repoPath: string, repo: VcRepository) {
-    this.backends.set(repo.repoPath, repo);
-    if (repoPath !== repo.repoPath) this.backends.set(repoPath, repo);
+  add(path: string, repo: VcRepository) {
+    this.backends.set(repo.path, repo);
+    if (path !== repo.path) this.backends.set(path, repo);
   }
 
-  del(repoPath: string) {
-    this.backends.delete(repoPath);
+  del(path: string) {
+    this.backends.delete(path);
   }
 
-  get(repoPath: string): VcRepository | undefined {
-    return this.backends.get(repoPath);
+  get(path: string): VcRepository | undefined {
+    return this.backends.get(path);
   }
 }
