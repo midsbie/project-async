@@ -77,7 +77,7 @@ and subsequent elements are command-line arguments.")
 (defvar project-async--last-completion-table nil
   "The list of last completion results.")
 
-(defvar project-async--in-progress nil
+(defvar project-async--request-in-progress nil
   "Flag to indicate if a request is in progress.")
 
 (defconst project-async--process-output-timeout 2.5
@@ -114,9 +114,9 @@ process.")
 (defun project-async--send-request (input)
   "Send INPUT to the Project Async server process."
   (when (process-live-p project-async-process)
-    (when project-async--in-progress
+    (when project-async--request-in-progress
       (accept-process-output project-async-process))
-    (setq project-async--in-progress t)
+    (setq project-async--request-in-progress t)
     (with-current-buffer project-async-process-buffer
       (let ((inhibit-read-only t))
         (erase-buffer)))
@@ -125,7 +125,7 @@ process.")
           (process-send-string project-async-process (concat input "\n"))
           (accept-process-output project-async-process project-async--process-output-timeout)
           (project-async--read-response))
-      (setq project-async--in-progress nil))))
+      (setq project-async--request-in-progress nil))))
 
 (defun project-async--read-response ()
   "Read and parse the JSON output from the Project Async server process buffer."
@@ -171,8 +171,7 @@ process.")
              (result (complete-with-action action candidates str pred)))
         (setq project-async--last-completion-time (float-time)
               project-async--last-completion-table `(,str ,candidates))
-        result
-        )))))
+        result)))))
 
 (defun project-async--read-file (prompt
                                  get-collection &optional predicate
@@ -191,8 +190,9 @@ process.")
 
   (if project-async-mode
       (progn
-        (setq project-async--last-completion-time 0
-              project-async--last-completion-table nil)
+        (setq project-async--last-completion-time   0
+              project-async--last-completion-table  nil
+              project-async--request-in-progress    nil)
         (condition-case err
             (progn
               (project-async--start-server)
