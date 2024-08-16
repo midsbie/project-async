@@ -20,7 +20,36 @@
 
 ;;; Commentary:
 
-;; Debugging function:
+;; The `project-async' package is ideal for developers working with large
+;; projects in Emacs who need a more responsive and efficient way to manage and
+;; navigate files via the `project-find-file' command.
+;;
+;; It exposes the global minor mode `project-async-mode', which when enabled
+;; runs a dedicated server process in the background to handle file completions
+;; asynchronously, ensuring that the Emacs interface always remains responsive.
+
+;; Key features include:
+;;
+;; * Asynchronous file completion
+;;
+;;   The module overrides the standard `project-find-file-in' function to
+;;   provide file completions via an asynchronous process. This allows for
+;;   quicker and more responsive file searching within large projects.
+
+;; Example usage:
+;;
+;; To enable the mode, simply add the following to your Emacs configuration:
+;;
+;; (project-async-mode 1)
+;;
+;; Then, use `project-find-file' as usual, and enjoy faster, asynchronous file
+;; searching.
+;;
+;; Disabling the mode restores standard functionality to `project-find-file'.
+
+;;; Development:
+
+;; * Function for easily triggering completions during development
 ;;
 ;; (defun complete-file-name ()
 ;;   (interactive)
