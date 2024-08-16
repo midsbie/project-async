@@ -189,8 +189,13 @@ process.")
       (progn
         (setq project-async--last-completion-time 0
               project-async--last-completion-table nil)
-        (project-async--start-server)
-        (advice-add 'project-find-file-in :override #'project-async--override-project-find-file-in))
+        (condition-case err
+            (progn
+              (project-async--start-server)
+              (advice-add 'project-find-file-in :override #'project-async--override-project-find-file-in))
+          (error
+           (setq project-async-mode nil)
+           (user-error "Failed to start Project Async server: %s" err))))
     (project-async--stop-server)
     (when (buffer-live-p project-async-process-buffer)
       (kill-buffer project-async-process-buffer))
