@@ -1,5 +1,6 @@
-import readline from 'readline';
-import { CommandParser } from './CommandParser';
+import readline from "readline";
+
+import { CommandParser } from "./CommandParser";
 
 export class StdioCommandInterface {
   job: Promise<any> | null;
@@ -17,13 +18,13 @@ export class StdioCommandInterface {
       terminal: false,
     });
 
-    rl.on('line', async (input) => {
+    rl.on("line", async (input) => {
       const result = await this.process(input);
       console.log(JSON.stringify(result));
     });
 
-    rl.on('close', () => {
-      console.log('Input stream closed');
+    rl.on("close", () => {
+      console.log("Input stream closed");
     });
   }
 
@@ -33,7 +34,7 @@ export class StdioCommandInterface {
     const command = this.commandParser.parse(input);
     if (command == null) return [];
 
-    this.job = new Promise(async resolve => {
+    this.job = new Promise(async (resolve) => {
       try {
         resolve(await command.run());
       } catch (e) {

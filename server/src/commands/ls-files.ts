@@ -1,6 +1,6 @@
 import { Command } from "../Command";
-import { MAX_CANDIDATES } from '../consts';
 import { GitLsFiles } from "../GitLsFiles";
+import { MAX_CANDIDATES } from "../consts";
 
 export class LsFilesCommand extends Command<string[]> {
   directory: string;
@@ -13,9 +13,9 @@ export class LsFilesCommand extends Command<string[]> {
   }
 
   async run(): Promise<string[]> {
-    const coll = await (new GitLsFiles()).list(this.directory);
+    const coll = await new GitLsFiles().list(this.directory);
     return this.terms
-      .reduce((c, t) => c.filter(it => it.includes(t)), coll)
+      .reduce((c, t) => c.filter((it) => it.includes(t)), coll)
       .slice(0, MAX_CANDIDATES);
   }
 }

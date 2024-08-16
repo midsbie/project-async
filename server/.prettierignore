@@ -1,3 +1,5 @@
 dist/*
 
 .eslintrc
+# Messes up commas separating properties due to JSON standard-violating presence of comments.
+tsconfig.json
