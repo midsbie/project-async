@@ -1,0 +1,45 @@
+root: true
+
+settings:
+  import/resolver: { node: { extensions: [".js", ".jsx", ".ts", ".tsx"] } }
+
+plugins:
+  - "@typescript-eslint"
+  - import
+
+extends:
+  - eslint:recommended
+  - plugin:@typescript-eslint/eslint-recommended
+  - plugin:@typescript-eslint/recommended
+  - plugin:import/recommended
+
+env:
+  es6: true
+
+globals:
+  process: true
+
+# http://eslint.org/docs/rules/
+rules:
+  # Typescript
+  "@typescript-eslint/no-explicit-any": 0
+  "@typescript-eslint/no-unused-vars":
+    [
+      1,
+      {
+        "args": "all",
+        "argsIgnorePattern": "^_",
+        "caughtErrors": "all",
+        "caughtErrorsIgnorePattern": "^_",
+        "destructuredArrayIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "ignoreRestSiblings": true,
+      },
+    ]
+  "@typescript-eslint/no-empty-object-type": 0
+
+  # General JavaScript
+  eqeqeq: ["error", "always", { "null": "ignore" }]
+
+  # Etc
+  no-prototype-builtins: "warn"
