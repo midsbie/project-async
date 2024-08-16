@@ -19,30 +19,34 @@ export class StdioCommandInterface {
     });
 
     rl.on("line", async (input) => {
-      const result = await this.process(input);
+      let result;
+
+      try {
+        result = await this.process(input);
+      } catch (e) {
+        console.error(e);
+        result = [];
+      }
+
       console.log(JSON.stringify(result));
     });
 
     rl.on("close", () => {
-      console.log("Input stream closed");
+      process.exit(0);
     });
   }
 
   private async process(input: string) {
-    await this.job;
+    if (this.job) await this.job;
 
     const command = this.commandParser.parse(input);
-    if (command == null) return [];
+    if (!command) return [];
 
-    this.job = new Promise(async (resolve) => {
-      try {
-        resolve(await command.run());
-      } catch (e) {
-        console.error("Error while running command:", e);
-        resolve([]);
-      }
-    });
-
-    return await this.job;
+    try {
+      this.job = command.run();
+      return await this.job;
+    } finally {
+      this.job = null;
+    }
   }
 }
