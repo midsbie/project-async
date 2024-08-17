@@ -5,9 +5,9 @@ export class CompleteFileCommand extends ServerCommand<string[]> {
   readonly repo: VcRepository;
   readonly terms: string[];
 
-  constructor(backend: VcRepository, terms: string[]) {
+  constructor(repo: VcRepository, terms: string[]) {
     super();
-    this.repo = backend;
+    this.repo = repo;
     this.terms = terms;
   }
 

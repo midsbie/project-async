@@ -1,9 +1,9 @@
 export interface VcBackendConstructor {
-  create(path: string): Promise<VcBackend>;
+  create(repoPath: string): Promise<VcBackend>;
 }
 
 export interface VcBackend {
-  readonly path: string;
-  listFast(): Promise<string[]>;
-  list(): Promise<string[]>;
+  readonly rootPath: string;
+  listFast(subPath?: string): Promise<string[]>;
+  list(subPath?: string): Promise<string[]>;
 }

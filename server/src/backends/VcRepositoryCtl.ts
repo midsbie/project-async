@@ -1,3 +1,5 @@
+import path from "node:path";
+
 import { VcBackendFactory } from "./VcBackendFactory";
 import { VcRepository } from "./VcRepository";
 
@@ -8,34 +10,40 @@ export class VcRepositoryCtl {
     this.knownRepos = new VcKnownRepositories();
   }
 
-  async get(path: string): Promise<VcRepository> {
-    let repo = this.knownRepos.get(path);
+  async get(repoPath: string): Promise<VcRepository> {
+    repoPath = path.resolve(path.normalize(repoPath));
+
+    let repo = this.knownRepos.get(repoPath);
     if (repo) return repo;
 
-    const backend = await VcBackendFactory.getBackend(path);
-    repo = new VcRepository(backend);
-    this.knownRepos.add(path, repo);
+    const backend = await VcBackendFactory.getBackend(repoPath);
+    let subPath;
+    if (repoPath !== backend.rootPath && repoPath.startsWith(backend.rootPath)) {
+      subPath = repoPath.substring(backend.rootPath.length).replace(/^[/]+/, "");
+    }
+
+    repo = new VcRepository(backend, subPath);
+    this.knownRepos.add(repo);
     return repo;
   }
 }
 
 class VcKnownRepositories {
-  backends: Map<string, VcRepository>;
+  repos: Map<string, VcRepository>;
 
   constructor() {
-    this.backends = new Map();
+    this.repos = new Map();
   }
 
-  add(path: string, repo: VcRepository) {
-    this.backends.set(repo.path, repo);
-    if (path !== repo.path) this.backends.set(path, repo);
+  add(repo: VcRepository) {
+    this.repos.set(repo.repoPath, repo);
   }
 
-  del(path: string) {
-    this.backends.delete(path);
+  del(repoPath: string) {
+    this.repos.delete(repoPath);
   }
 
   get(path: string): VcRepository | undefined {
-    return this.backends.get(path);
+    return this.repos.get(path);
   }
 }

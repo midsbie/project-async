@@ -1,41 +1,44 @@
-import { spawn, spawnSync } from "child_process";
+import { spawn, spawnSync } from "node:child_process";
+import path from "node:path";
 
 import { VcBackend } from "./VcBackend";
 import { VcBackendFactory } from "./VcBackendFactory";
 
 export class GitBackend implements VcBackend {
-  readonly path: string;
+  readonly rootPath: string;
 
-  static async create(path: string): Promise<VcBackend> {
+  static async create(repoPath: string): Promise<VcBackend> {
+    repoPath = path.resolve(path.normalize(repoPath));
+
     const revParse = spawnSync("git", ["rev-parse", "--show-toplevel"], {
       encoding: "utf8",
-      cwd: path,
+      cwd: repoPath,
     });
 
-    const stdout = revParse.stdout.trim();
-    if (revParse.error || revParse.stderr.trim() || !stdout) {
-      throw new Error(`Git repository not found at: ${path}`);
+    const rootPath = revParse.stdout.trim();
+    if (revParse.error || revParse.stderr.trim() || !rootPath) {
+      throw new Error(`Git repository not found at: ${repoPath}`);
     }
 
-    return new GitBackend(stdout);
+    return new GitBackend(rootPath);
   }
 
-  private constructor(path: string) {
-    this.path = path;
+  private constructor(rootPath: string) {
+    this.rootPath = rootPath;
   }
 
-  listFast(): Promise<string[]> {
-    return this._list(["-z"]);
+  listFast(subPath?: string): Promise<string[]> {
+    return this._list(subPath, ["-z"]);
   }
 
-  list(): Promise<string[]> {
-    return this._list(["-zco", "--exclude-standard"]);
+  list(subPath?: string): Promise<string[]> {
+    return this._list(subPath, ["-zco", "--exclude-standard"]);
   }
 
-  private _list(args: string[]): Promise<string[]> {
+  private _list(subPath: string | undefined, args: string[]): Promise<string[]> {
     return new Promise((resolve) => {
       const gitProcess = spawn("git", ["ls-files", ...args], {
-        cwd: this.path,
+        cwd: subPath ? path.join(this.rootPath, subPath) : this.rootPath,
       });
       const output: Uint8Array[] = [];
 
@@ -56,6 +59,7 @@ export class GitBackend implements VcBackend {
 
         const result = Buffer.concat(output).toString("utf8").split("\0");
         if (result[result.length - 1] === "") result.pop();
+
         resolve(result);
       });
     });
