@@ -21,10 +21,12 @@ export class VcRepository {
   async completeFiles(terms: readonly string[]): Promise<string[]> {
     const now = Date.now();
     if (now - this.lastCompletionTime > UPDATE_THRESHOLD_MS) await this.assets.update();
-    const coll = [...this.assets.get()];
-    // RegExp-based approach is surprisingly faster than it.toLowerCase().includes(t)
+
+    // RegExp-based approach is significantly faster than it.toLowerCase().includes(t)
     const res = terms.map((t) => new RegExp(t, "i"));
-    const r = res.reduce((c, re) => c.filter((it) => re.test(it)), coll).slice(0, MAX_CANDIDATES);
+    const r = res
+      .reduce((c, re) => c.filter((it) => re.test(it)), this.assets.getAsArray())
+      .slice(0, MAX_CANDIDATES);
     this.lastCompletionTime = now;
     return r;
   }
@@ -58,5 +60,9 @@ class RepoAssets {
 
   get(): Set<string> {
     return this.assets;
+  }
+
+  getAsArray(): string[] {
+    return [...this.assets];
   }
 }
