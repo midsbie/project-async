@@ -84,20 +84,31 @@ and subsequent elements are command-line arguments.")
   "Timeout in seconds to wait for a response from the Project Async server
 process.")
 
+(defun project-async--get-server-buffer ()
+  "Get or create the buffer for the Project Async server process.
+
+This function returns the existing server buffer if it's live, or
+creates a new one if the current buffer doesn't exist or has been
+killed.
+
+The buffer is stored in `project-async-process-buffer' and is named
+*project-async-server*."
+  (if (and project-async-process-buffer (buffer-live-p project-async-process-buffer))
+      project-async-process-buffer
+    (setq project-async-process-buffer (get-buffer-create "*project-async-server*"))))
+
 (defun project-async--start-server ()
   "Start the Project Async server as a subprocess."
   (unless (and project-async-process (process-live-p project-async-process))
-    (let ((buffer (get-buffer-create "*project-async-server*")))
-      (with-current-buffer buffer
-        (setq buffer-undo-list t
-              buffer-read-only t)
-        (setq-local auto-save-default nil)
-        (setq-local truncate-lines t)
-        )
-      (setq project-async-process-buffer buffer
-            project-async-process (apply #'start-process
+    (with-current-buffer (project-async--get-server-buffer)
+      (erase-buffer)
+      (setq buffer-undo-list t
+            buffer-read-only t)
+      (setq-local auto-save-default nil)
+      (setq-local truncate-lines t)
+      (setq project-async-process (apply #'start-process
                                          "project-async-server"
-                                         buffer
+                                         (current-buffer)
                                          project-async-server-command))
       (set-process-query-on-exit-flag project-async-process nil))))
 
@@ -114,7 +125,7 @@ process.")
     (when project-async--request-in-progress
       (accept-process-output project-async-process))
     (setq project-async--request-in-progress t)
-    (with-current-buffer project-async-process-buffer
+    (with-current-buffer (project-async--get-server-buffer)
       (let ((inhibit-read-only t))
         (erase-buffer)))
     (unwind-protect
