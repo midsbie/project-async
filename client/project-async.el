@@ -98,7 +98,13 @@ The buffer is stored in `project-async-process-buffer' and is named
     (setq project-async-process-buffer (get-buffer-create "*project-async-server*"))))
 
 (defun project-async--start-server ()
-  "Start the Project Async server as a subprocess."
+"Start the Project Async server as a subprocess.
+
+This function initiates the Project Async server process if it's not
+already running.  It prepares the server buffer and starts the server
+process using `project-async-server-command'.
+
+The server process is stored in `project-async-process'."
   (unless (and project-async-process (process-live-p project-async-process))
     (with-current-buffer (project-async--get-server-buffer)
       (erase-buffer)
@@ -113,14 +119,23 @@ The buffer is stored in `project-async-process-buffer' and is named
       (set-process-query-on-exit-flag project-async-process nil))))
 
 (defun project-async--stop-server ()
-  "Stop the Project Async server process if it is running."
+  "Stop the Project Async server process if it is running.
+
+This function terminates the Project Async server process if it's
+active.  It safely handles potential errors during the termination
+process and resets `project-async-process' to nil afterwards."
   (when (and project-async-process (process-live-p project-async-process))
     (with-demoted-errors "Failed to stop Project Async server: %S"
       (kill-process project-async-process)))
   (setq project-async-process nil))
 
 (defun project-async--send-request (input)
-  "Send INPUT to the Project Async server process."
+  "Send INPUT to the Project Async server process.
+
+This function sends a request to the active server process and waits for
+a response.  It handles concurrent requests, clears the buffer before
+sending, and processes the server's output.  The function returns the
+parsed response or nil if an error occurs."
   (when (process-live-p project-async-process)
     (with-current-buffer (project-async--get-server-buffer)
       (while (and project-async--request-in-progress
@@ -137,7 +152,13 @@ The buffer is stored in `project-async-process-buffer' and is named
         result))))
 
 (defun project-async--read-response ()
-  "Read and parse the JSON output from the Project Async server process buffer."
+  "Read and parse the JSON output from the Project Async server process buffer.
+
+This function retrieves the content from the server buffer, trims
+whitespace, and parses it as JSON if non-empty.  It purposely avoids
+calling `project-async--get-server-buffer' and expects the buffer given
+by `project-async-process-buffer' to exist.  Returns the parsed JSON
+data or nil if the buffer is empty."
   (with-current-buffer project-async-process-buffer
     (let ((json-array-type 'list)
           (content (string-trim (buffer-substring-no-properties (point-min) (point-max)))))
@@ -145,7 +166,12 @@ The buffer is stored in `project-async-process-buffer' and is named
         (json-read-from-string content)))))
 
 (defun project-async--complete-file (input)
-  "Generate completion candidates for INPUT using the Project Async server."
+  "Generate completion candidates for INPUT using the Project Async server.
+
+This function sends a request to the Project Async server to complete file
+paths based on the given INPUT.  It operates within the current project's
+root directory.  The function returns the server's response, which should
+be a list of completion candidates."
   (when-let ((dir (project-root (project-current))))
     (project-async--send-request (string-join
                                   (list "complete-file"
@@ -153,7 +179,14 @@ The buffer is stored in `project-async-process-buffer' and is named
                                         input) " "))))
 
 (defun project-async--override-project-find-file-in (suggested-filename dirs project &optional include-all)
-  "Custom implementation replacing `project-find-file-in`."
+  "Custom implementation replacing `project-find-file-in'.
+
+This function provides an asynchronous file finding mechanism within a
+project.  It uses `project-async--read-file' for reading file names and
+`project-async--completion-function' for completion.  The function
+respects the project root and the current `completion-ignore-case'
+setting.  If a file is selected, it opens it using `find-file'; raises a
+user error otherwise."
   (let* ((project-read-file-name-function #'project-async--read-file)
          (completion-ignore-case read-file-name-completion-ignore-case)
          (default-directory (project-root project))
@@ -162,12 +195,22 @@ The buffer is stored in `project-async-process-buffer' and is named
                 #'project-async--completion-function nil
                 'file-name-history
                 suggested-filename)))
-    (if (string= file "")
+    (if (string-empty-p file)
         (user-error "You didn't specify the file")
       (find-file file))))
 
 (defun project-async--completion-function (str pred action)
-  "Custom completion function that interacts with the Project Async server."
+  "Custom completion function for Project Async server interaction.
+
+This function handles completion requests for project files.  It caches
+results to improve performance on rapid subsequent calls.  Caching is
+necessary because this completion function may be called multiple times
+per query depending on the state of `completion-styles'.  If called
+within 100ms of the last request, it uses cached candidates; otherwise,
+fetches new completions from the server.  Cached candidates are stored
+in `project-async--last-completion-table'.
+
+When called with 'metadata action, it returns project-file category."
   (if (eq action 'metadata)
       (progn
         ;; Another possible value is '(metadata . ((category . file)))
