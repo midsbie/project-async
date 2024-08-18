@@ -84,21 +84,8 @@ and subsequent elements are command-line arguments.")
   "Timeout in seconds to wait for a response from the Project Async server
 process.")
 
-(defun project-async--get-server-buffer ()
-  "Get or create the buffer for the Project Async server process.
-
-This function returns the existing server buffer if it's live, or
-creates a new one if the current buffer doesn't exist or has been
-killed.
-
-The buffer is stored in `project-async-process-buffer' and is named
-*project-async-server*."
-  (if (and project-async-process-buffer (buffer-live-p project-async-process-buffer))
-      project-async-process-buffer
-    (setq project-async-process-buffer (get-buffer-create "*project-async-server*"))))
-
 (defun project-async--start-server ()
-"Start the Project Async server as a subprocess.
+  "Start the Project Async server as a subprocess.
 
 This function initiates the Project Async server process if it's not
 already running.  It prepares the server buffer and starts the server
@@ -106,7 +93,9 @@ process using `project-async-server-command'.
 
 The server process is stored in `project-async-process'."
   (unless (and project-async-process (process-live-p project-async-process))
-    (with-current-buffer (project-async--get-server-buffer)
+    (with-current-buffer
+        (setq project-async-process-buffer
+              (get-buffer-create "*project-async-server*"))
       (erase-buffer)
       (setq buffer-undo-list t
             buffer-read-only t)
@@ -121,13 +110,30 @@ The server process is stored in `project-async-process'."
 (defun project-async--stop-server ()
   "Stop the Project Async server process if it is running.
 
-This function terminates the Project Async server process if it's
-active.  It safely handles potential errors during the termination
-process and resets `project-async-process' to nil afterwards."
+This function terminates the Project Async server process if it's active
+and kills the associated process buffer if live.  It safely handles
+potential errors during the termination process and resets
+`project-async-process' and `project-async-process-buffer' to nil afterwards.
+
+The function is idempotent and safe to call multiple times, even if the
+server isn't running or has already been stopped."
   (when (and project-async-process (process-live-p project-async-process))
     (with-demoted-errors "Failed to stop Project Async server: %S"
       (kill-process project-async-process)))
-  (setq project-async-process nil))
+  (when (and project-async-process-buffer (buffer-live-p project-async-process-buffer))
+    (kill-buffer project-async-process-buffer))
+  (setq project-async-process        nil
+        project-async-process-buffer nil))
+
+(defun project-async--server-live-p ()
+  "Check if the Project Async server process is live.
+
+This function determines whether the server process is currently running
+and its associated buffer active.
+
+Returns non-nil if the process and buffer are live."
+  (and project-async-process (process-live-p project-async-process)
+       project-async-process-buffer (buffer-live-p project-async-process-buffer)))
 
 (defun project-async--send-request (input)
   "Send INPUT to the Project Async server process.
@@ -136,8 +142,8 @@ This function sends a request to the active server process and waits for
 a response.  It handles concurrent requests, clears the buffer before
 sending, and processes the server's output.  The function returns the
 parsed response or nil if an error occurs."
-  (when (process-live-p project-async-process)
-    (with-current-buffer (project-async--get-server-buffer)
+  (when (project-async--server-live-p)
+    (with-current-buffer project-async-process-buffer
       (while (and project-async--request-in-progress
                   (eq (point-min) (point-max)))
         (accept-process-output project-async-process project-async--process-output-timeout))
@@ -155,9 +161,7 @@ parsed response or nil if an error occurs."
   "Read and parse the JSON output from the Project Async server process buffer.
 
 This function retrieves the content from the server buffer, trims
-whitespace, and parses it as JSON if non-empty.  It purposely avoids
-calling `project-async--get-server-buffer' and expects the buffer given
-by `project-async-process-buffer' to exist.  Returns the parsed JSON
+whitespace, and parses it as JSON if non-empty.  Returns the parsed JSON
 data or nil if the buffer is empty."
   (with-current-buffer project-async-process-buffer
     (let ((json-array-type 'list)
