@@ -1,17 +1,18 @@
 # Project Async
 
-Project Async is a package designed to enhance file completion performance within Emacs,
-particularly for developers working with very large repositories. It achieves this by introducing
-asynchronous file completion to the `project-find-file` command, ensuring that Emacs remains
-responsive even when dealing with vast numbers of files.
+Project Async is a package designed to significantly enhance file completion performance within
+Emacs, particularly for developers working with very large repositories. It integrates seamlessly
+with Emacs' core `project` package by introducing asynchronous file completion to the
+`project-find-file` command, ensuring that Emacs remains responsive even when dealing with vast
+numbers of files.
 
 ## Features
 
 - The package overrides the standard `project-find-file-in` function, providing file completions via
   a background server process, resulting in faster and more responsive file searching.
 
-- The `project-async-mode` minor mode can be enabled globally, allowing seamless integration into
-  your workflow without additional configuration after setup.
+- The `project-async-mode` global minor mode allows for seamless integration without additional
+  configuration after setup.
 
 - Users can enable the minor mode and continue using `project-find-file` as usual, benefiting
   immediately from the asynchronous enhancements.
@@ -22,10 +23,9 @@ responsive even when dealing with vast numbers of files.
 
 Project Async was born out of necessity when working with very large codebases. In repositories
 containing over a million files, the standard `project-find-file` function in Emacs becomes
-practically unusable due to performance issues. Performance issues can also be experienced with
-large repositories like [Chromium](https://github.com/chromium/chromium). The sheer volume of files
-causes significant delays and can even freeze the Emacs interface, impacting productivity. This
-package aims to solve this problem by introducing asynchronous file completion.
+practically unusable due to performance issues. The sheer volume of files causes significant delays
+and can freeze the Emacs interface, impacting productivity. This package introduces asynchronous
+file completion, which solves this problem.
 
 ## Installation
 
