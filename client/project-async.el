@@ -139,8 +139,10 @@ The buffer is stored in `project-async-process-buffer' and is named
 (defun project-async--read-response ()
   "Read and parse the JSON output from the Project Async server process buffer."
   (with-current-buffer project-async-process-buffer
-    (let ((json-array-type 'list))
-      (json-read-from-string (buffer-string)))))
+    (let ((json-array-type 'list)
+          (content (string-trim (buffer-substring-no-properties (point-min) (point-max)))))
+      (unless (string-empty-p content)
+        (json-read-from-string content)))))
 
 (defun project-async--complete-file (input)
   "Generate completion candidates for INPUT using the Project Async server."
