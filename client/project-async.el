@@ -122,18 +122,19 @@ The buffer is stored in `project-async-process-buffer' and is named
 (defun project-async--send-request (input)
   "Send INPUT to the Project Async server process."
   (when (process-live-p project-async-process)
-    (when project-async--request-in-progress
-      (accept-process-output project-async-process))
-    (setq project-async--request-in-progress t)
     (with-current-buffer (project-async--get-server-buffer)
+      (while (and project-async--request-in-progress
+                  (eq (point-min) (point-max)))
+        (accept-process-output project-async-process project-async--process-output-timeout))
+      (setq project-async--request-in-progress t)
       (let ((inhibit-read-only t))
         (erase-buffer)))
-    (unwind-protect
-        (progn
-          (process-send-string project-async-process (concat input "\n"))
-          (accept-process-output project-async-process project-async--process-output-timeout)
-          (project-async--read-response))
-      (setq project-async--request-in-progress nil))))
+    (with-demoted-errors "Error during request to server: %S"
+      (process-send-string project-async-process (concat input "\n"))
+      (accept-process-output project-async-process project-async--process-output-timeout)
+      (let ((result (project-async--read-response)))
+        (setq project-async--request-in-progress nil)
+        result))))
 
 (defun project-async--read-response ()
   "Read and parse the JSON output from the Project Async server process buffer."
