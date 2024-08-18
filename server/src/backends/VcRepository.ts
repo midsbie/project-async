@@ -25,7 +25,10 @@ export class VcRepository {
   async completeFiles(terms: readonly string[]): Promise<string[]> {
     const now = Date.now();
     if (now - this.lastCompletionTime > UPDATE_THRESHOLD_MS) {
-      await this.assets.update(this.subPath);
+      const updating = this.assets.update(this.subPath);
+      // Only wait for update to complete if we have nothing to show; otherwise, update in the
+      // background and show refreshed candidates in a future completion.
+      if (this.assets.isEmpty()) await updating;
     }
 
     // RegExp-based approach is significantly faster than: it.toLowerCase().includes(t)
@@ -68,5 +71,9 @@ class RepoAssets {
 
   getAsArray(): string[] {
     return [...this.assets];
+  }
+
+  isEmpty(): boolean {
+    return this.assets.size < 1;
   }
 }
