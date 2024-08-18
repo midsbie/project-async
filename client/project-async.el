@@ -96,6 +96,9 @@ The server process is stored in `project-async-process'."
     (with-current-buffer
         (setq project-async-process-buffer
               (get-buffer-create "*project-async-server*"))
+      (add-hook 'kill-buffer-query-functions
+                #'project-async--confirm-server-buffer-kill
+                nil t)
       (erase-buffer)
       (setq buffer-undo-list t
             buffer-read-only t)
@@ -120,8 +123,7 @@ server isn't running or has already been stopped."
   (when (and project-async-process (process-live-p project-async-process))
     (with-demoted-errors "Failed to stop Project Async server: %S"
       (kill-process project-async-process)))
-  (when (and project-async-process-buffer (buffer-live-p project-async-process-buffer))
-    (kill-buffer project-async-process-buffer))
+  (project-async--kill-server-buffer)
   (setq project-async-process        nil
         project-async-process-buffer nil))
 
@@ -134,6 +136,25 @@ and its associated buffer active.
 Returns non-nil if the process and buffer are live."
   (and project-async-process (process-live-p project-async-process)
        project-async-process-buffer (buffer-live-p project-async-process-buffer)))
+
+(defun project-async--kill-server-buffer ()
+  "Safely kill the Project Async server process buffer.
+
+This function checks if the `project-async-process-buffer' exists and is
+still live, and if so, kills the buffer without triggering any
+confirmation prompts."
+  (when (and project-async-process-buffer (buffer-live-p project-async-process-buffer))
+    (with-current-buffer project-async-process-buffer
+      (let ((kill-buffer-query-functions nil))
+        (kill-buffer project-async-process-buffer)))))
+
+(defun project-async--confirm-server-buffer-kill ()
+  "Ask for confirmation before killing the Project Async server buffer.
+Skip confirmation if Emacs is quitting."
+  (when (and (not (memq this-command '(save-buffers-kill-terminal save-buffers-kill-emacs)))
+             (yes-or-no-p "The Project Async server buffer is being killed. This will disable async file completion. Continue?"))
+    (project-async-mode -1)
+    (message "Project Async mode disabled. Run project-async-mode to re-enable.")))
 
 (defun project-async--send-request (input)
   "Send INPUT to the Project Async server process.
@@ -259,8 +280,6 @@ When called with 'metadata action, it returns project-file category."
            (setq project-async-mode nil)
            (user-error "Failed to start Project Async server: %S" err))))
     (project-async--stop-server)
-    (when (buffer-live-p project-async-process-buffer)
-      (kill-buffer project-async-process-buffer))
     (advice-remove 'project-find-file-in #'project-async--override-project-find-file-in)))
 
 (provide 'project-async)
