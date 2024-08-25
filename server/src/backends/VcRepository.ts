@@ -31,11 +31,27 @@ export class VcRepository {
       if (this.assets.isEmpty()) await updating;
     }
 
-    const r = this.getMatchersFromTerms(terms)
-      .reduce((c, re) => c.filter((it) => re.test(it)), this.assets.getAsArray())
-      .slice(0, MAX_CANDIDATES);
+    const res = this.getMatchersFromTerms(terms);
+    let r = res.reduce((c, re) => c.filter((it) => re.test(it)), this.assets.getAsArray());
+
+    const lre = res[res.length - 1];
+    if (lre) {
+      r = r.sort((a, b) => {
+        const ma = lre.test(path.basename(a));
+        const mb = lre.test(path.basename(b));
+
+        if (ma) {
+          if (!mb) return -1;
+        } else if (mb) {
+          return 1;
+        }
+
+        return 0;
+      });
+    }
+
     this.lastCompletionTime = now;
-    return r;
+    return r.slice(0, MAX_CANDIDATES);
   }
 
   private getMatchersFromTerms(terms: readonly string[]): RegExp[] {
