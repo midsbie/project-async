@@ -1,1 +1,1 @@
-export const MAX_CANDIDATES = 100;
+export const MAX_CANDIDATES = 500;
