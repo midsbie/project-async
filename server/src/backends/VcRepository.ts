@@ -31,13 +31,18 @@ export class VcRepository {
       if (this.assets.isEmpty()) await updating;
     }
 
-    // RegExp-based approach is significantly faster than: it.toLowerCase().includes(t)
-    const res = terms.map((t) => new RegExp(t, "i"));
-    const r = res
+    const r = this.getMatchersFromTerms(terms)
       .reduce((c, re) => c.filter((it) => re.test(it)), this.assets.getAsArray())
       .slice(0, MAX_CANDIDATES);
     this.lastCompletionTime = now;
     return r;
+  }
+
+  private getMatchersFromTerms(terms: readonly string[]): RegExp[] {
+    // RegExp-based approach is significantly faster than: it.toLowerCase().includes(t).
+    //
+    // Note that matching is case-insensitive for a term when it is fully in lowercase.
+    return terms.map((t) => new RegExp(t, t === t.toLowerCase() ? "i" : ""));
   }
 }
 
