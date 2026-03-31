@@ -1,0 +1,59 @@
+#+TITLE: project-async
+#+AUTHOR: Miguel Guedes
+#+OPTIONS: toc:nil num:nil ^:nil
+
+Significantly enhances file completion performance within Emacs, particularly for developers working with very large repositories. Integrates with Emacs' core ~project~ package by introducing asynchronous file completion to the ~project-find-file~ command, ensuring that Emacs remains responsive even when dealing with vast numbers of files.
+
+In repositories containing over a million files, the standard ~project-find-file~ becomes practically unusable due to performance issues. This package solves the problem by running file completion through a background server process.
+
+* Features
+
+- Overrides the standard ~project-find-file-in~ function, providing file completions via a background server process.
+- The ~project-async-mode~ global minor mode allows for seamless integration without additional configuration after setup.
+- Works with the user's ~completion-styles~.
+
+* Requirements
+
+- Node.js and npm (for building the server component).
+
+* Installation
+
+** Server
+
+The server, written in TypeScript, needs to be built before use:
+
+#+begin_src shell
+cd /path/to/project-async/server
+npm install
+npm run build
+#+end_src
+
+** Emacs Client
+
+Add ~project-async.el~ to your load path and require it:
+
+#+begin_src emacs-lisp
+(add-to-list 'load-path "/path/to/project-async")
+(require 'project-async)
+(project-async-mode 1)
+#+end_src
+
+Once the mode is enabled, use ~project-find-file~ as usual.
+
+* Configuration
+
+- ~project-async-server-command~ :: Command and arguments used to start the server process (default: ~'("project-async-server" "serve" "--stdio")~). The server binary must be available in ~exec-path~, or set this variable to the full path:
+
+  #+begin_src emacs-lisp
+  (setq project-async-server-command '("/path/to/project-async/server/dist/project-async-server" "serve" "--stdio"))
+  #+end_src
+
+* Roadmap
+
+- Ordering of filtered candidates.
+- Support for server output in ELISP for fast eval in Emacs.
+- Async completion of directories via ~project-find-dir~.
+
+* License
+
+Distributed under the MIT License. See [[file:LICENSE][LICENSE]] for details.
